@@ -1,0 +1,17 @@
+1. Clone the repo
+2. Install tensorflow, opencv and numpy
+
+Windows: pip install tensorflow opencv-python numpy
+Linux (arch): Sudo pacman -S tensorflow-python opencv-python numpy-python
+Linux (debian based): Sudo apt install tensorflow-python opencv-python numpy-python
+
+The code is meant to run only on a laptops default webcam for now,
+Once all files are downloaded place 5 to 6 pictures of whatever face you want to recognize on the face_data/personx folders
+
+Save all changes and run the following scripts in sequnece:
+
+python setup_model.py
+python register_faces.py
+python test_doorbell.py
+
+Camera should pop up after test_doorbell.py runs and the inference will be visible after a while
