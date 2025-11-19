@@ -1,4 +1,11 @@
-import tensorflow as tf
+# Try to use tflite-runtime (lighter for RPi), fallback to tensorflow
+try:
+    import tflite_runtime.interpreter as tflite
+    USING_TFLITE_RUNTIME = True
+except ImportError:
+    import tensorflow as tf
+    USING_TFLITE_RUNTIME = False
+
 import numpy as np
 import cv2
 from pathlib import Path
@@ -25,7 +32,10 @@ class SmartDoorbellSystem:
         self.embeddings_path = embeddings_path
         
         # Load TFLite model
-        self.interpreter = tf.lite.Interpreter(model_path=model_path)
+        if USING_TFLITE_RUNTIME:
+            self.interpreter = tflite.Interpreter(model_path=model_path)
+        else:
+            self.interpreter = tf.lite.Interpreter(model_path=model_path)
         self.interpreter.allocate_tensors()
         
         # Get input and output details
@@ -36,7 +46,7 @@ class SmartDoorbellSystem:
         self.known_faces = self.load_known_faces()
         
         # Initialize face detector (Haar Cascade - lightweight)
-# Try to find the Haar cascade file
+        # Try to find the Haar cascade file
         cascade_path = 'haarcascade_frontalface_default.xml'
         if not Path(cascade_path).exists():
             # Download it if not present
@@ -174,7 +184,7 @@ class SmartDoorbellSystem:
         Captures a single photo and identifies person
         
         Args:
-            camera_index: Camera device index
+            camera_index: Camera device index (default 0, try 1 or 2 if not working)
             save_image: Whether to save the captured image
         
         Returns:
@@ -184,15 +194,37 @@ class SmartDoorbellSystem:
         print(f"Doorbell pressed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"{'='*50}\n")
         
-        # Open camera
+        # Open camera - try different camera indices if specified one fails
         cap = cv2.VideoCapture(camera_index)
+        
+        if not cap.isOpened():
+            print(f"Camera {camera_index} failed, trying alternate cameras...")
+            # Try other common camera indices
+            for alt_idx in [0, 1, 2]:
+                if alt_idx != camera_index:
+                    cap = cv2.VideoCapture(alt_idx)
+                    if cap.isOpened():
+                        print(f"Using camera {alt_idx} instead")
+                        camera_index = alt_idx
+                        break
+        
+        if not cap.isOpened():
+            print(f"ERROR: Could not open any camera")
+            return "Unknown"
+        
+        # Set resolution
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
         
-        # Wait for camera to warm up
-        time.sleep(0.5)
+        # Wait for camera to warm up and stabilize
+        print("Warming up camera...")
+        time.sleep(1.0)
         
-        # Capture single frame
+        # Discard first few frames (often blurry)
+        for _ in range(3):
+            cap.read()
+        
+        # Capture the actual frame
         ret, frame = cap.read()
         cap.release()
         
@@ -227,10 +259,14 @@ class SmartDoorbellSystem:
             cv2.imwrite(filename, frame)
             print(f"Image saved as: {filename}")
         
-        # Display image briefly
-        cv2.imshow('Smart Doorbell - Press any key to close', frame)
-        cv2.waitKey(3000)  # Show for 3 seconds
-        cv2.destroyAllWindows()
+        # Display image briefly (skip if running headless on RPi)
+        try:
+            cv2.imshow('Smart Doorbell - Press any key to close', frame)
+            cv2.waitKey(3000)  # Show for 3 seconds
+            cv2.destroyAllWindows()
+        except:
+            # Running headless, just save the image
+            print("Running in headless mode (no display)")
         
         # Determine final result
         if best_result and best_confidence >= self.threshold:
@@ -251,6 +287,11 @@ def create_mobilenet_model(input_size=128, embedding_size=128):
     Create a lightweight MobileNetV2-based face recognition model
     Optimized for Raspberry Pi 4
     """
+    if USING_TFLITE_RUNTIME:
+        print("ERROR: Cannot create model with tflite-runtime.")
+        print("Please run this on a machine with full TensorFlow installed.")
+        return None
+    
     base_model = tf.keras.applications.MobileNetV2(
         input_shape=(input_size, input_size, 3),
         include_top=False,
@@ -274,6 +315,11 @@ def create_mobilenet_model(input_size=128, embedding_size=128):
 
 def convert_to_tflite(keras_model, output_path='face_recognition_model.tflite'):
     """Convert Keras model to TensorFlow Lite format"""
+    if USING_TFLITE_RUNTIME:
+        print("ERROR: Cannot convert model with tflite-runtime.")
+        print("Please run this on a machine with full TensorFlow installed.")
+        return
+    
     converter = tf.lite.TFLiteConverter.from_keras_model(keras_model)
     
     # Optimization for Raspberry Pi
@@ -313,17 +359,24 @@ def train_and_register_faces(system, data_dir='face_data'):
         person_name = person_dir.name
         print(f"\nRegistering {person_name}...")
         
-        # Get all images for this person
-        images = list(person_dir.glob('*.jpg')) + list(person_dir.glob('*.png'))
+        # Get all images for this person (support multiple extensions)
+        images = (list(person_dir.glob('*.jpg')) + 
+                  list(person_dir.glob('*.JPG')) +
+                  list(person_dir.glob('*.jpeg')) + 
+                  list(person_dir.glob('*.JPEG')) +
+                  list(person_dir.glob('*.png')) + 
+                  list(person_dir.glob('*.PNG')))
         
         if not images:
             print(f"No images found for {person_name}")
             continue
         
         # Use the first clear image for registration
+        registered = False
         for img_path in images:
             img = cv2.imread(str(img_path))
             if img is None:
+                print(f"  Could not read: {img_path.name}")
                 continue
             
             # Detect face
@@ -334,4 +387,10 @@ def train_and_register_faces(system, data_dir='face_data'):
                 x, y, w, h = faces[0]
                 face_roi = img[y:y+h, x:x+w]
                 system.register_face(face_roi, person_name)
+                registered = True
                 break
+            else:
+                print(f"  No face detected in: {img_path.name}")
+        
+        if not registered:
+            print(f"  WARNING: Could not register {person_name} - no valid faces found")
