@@ -1,6 +1,5 @@
 """
 test_doorbell.py - Test the doorbell system
-Run this to simulate a doorbell press and test recognition
 """
 
 from doorbell_system import SmartDoorbellSystem
@@ -22,9 +21,10 @@ if len(doorbell.known_faces['names']) == 0:
 
 print(f"\nRegistered faces: {', '.join(doorbell.known_faces['names'])}")
 
-
-# Simulate doorbell press (camera will auto-detect)
-result = doorbell.doorbell_pressed(camera_index=0)
+# CHANGE THIS NUMBER based on your camera test above
+# Try 0, 1, 2, 3, etc. until you find your external camera
+result = doorbell.doorbell_pressed(camera_index=2)  # <-- Change this number
 
 print(f"\n✓ Test complete! Result: {result}")
+print("Check the saved doorbell_TIMESTAMP.jpg image!")
 print("="*60)
