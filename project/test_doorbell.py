@@ -1,6 +1,5 @@
-"""
-test_doorbell.py - Test the doorbell system
-"""
+# REDUNDANT FILE - IGNORE
+
 
 from doorbell_system import SmartDoorbellSystem
 import time

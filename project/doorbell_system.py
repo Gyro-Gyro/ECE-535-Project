@@ -18,15 +18,7 @@ class SmartDoorbellSystem:
                  embeddings_path='known_faces.pkl',
                  input_size=128,
                  threshold=0.6):
-        """
-        Initialize the smart doorbell face recognition system
         
-        Args:
-            model_path: Path to TFLite model
-            embeddings_path: Path to stored known face embeddings
-            input_size: Input image size (128 recommended for Pi 4)
-            threshold: Similarity threshold for face matching
-        """
         self.input_size = input_size
         self.threshold = threshold
         self.embeddings_path = embeddings_path
@@ -45,8 +37,7 @@ class SmartDoorbellSystem:
         # Load known face embeddings
         self.known_faces = self.load_known_faces()
         
-        # Initialize face detector (Haar Cascade - lightweight)
-        # Try to find the Haar cascade file
+        # Load Haar cascade for face detection
         cascade_path = 'haarcascade_frontalface_default.xml'
         if not Path(cascade_path).exists():
             # Download it if not present
@@ -58,19 +49,19 @@ class SmartDoorbellSystem:
         self.face_cascade = cv2.CascadeClassifier(cascade_path)
         
     def load_known_faces(self):
-        """Load pre-computed embeddings of known persons"""
+        # Load known face embeddings from disk
         if Path(self.embeddings_path).exists():
             with open(self.embeddings_path, 'rb') as f:
                 return pickle.load(f)
         return {'names': [], 'embeddings': []}
     
     def save_known_faces(self):
-        """Save known face embeddings to disk"""
+        # Save known face embeddings to disk
         with open(self.embeddings_path, 'wb') as f:
             pickle.dump(self.known_faces, f)
     
     def preprocess_face(self, face_img):
-        """Preprocess face image for model input"""
+        # Preprocess face image for model input
         # Resize to model input size
         face_resized = cv2.resize(face_img, (self.input_size, self.input_size))
         
@@ -85,7 +76,7 @@ class SmartDoorbellSystem:
         return np.expand_dims(face_normalized, axis=0)
     
     def get_face_embedding(self, face_img):
-        """Extract face embedding using TFLite model"""
+        # Get embedding for a single face image
         input_data = self.preprocess_face(face_img)
         
         # Set input tensor
@@ -103,16 +94,11 @@ class SmartDoorbellSystem:
         return embedding[0]
     
     def cosine_similarity(self, emb1, emb2):
-        """Calculate cosine similarity between two embeddings"""
+        # Calculate cosine similarity between two embeddings
         return np.dot(emb1, emb2)
     
     def recognize_face(self, face_img):
-        """
-        Recognize a face and return name and confidence
-        
-        Returns:
-            tuple: (name, confidence) or ("Unknown", 0.0)
-        """
+        # Recognize a single face image
         if len(self.known_faces['names']) == 0:
             return "Unknown", 0.0
         
@@ -138,7 +124,7 @@ class SmartDoorbellSystem:
             return "Unknown", best_similarity
     
     def register_face(self, face_img, name):
-        """Register a new face to the known faces database"""
+        # Register a new face with given name
         embedding = self.get_face_embedding(face_img)
         
         self.known_faces['names'].append(name)
@@ -148,12 +134,7 @@ class SmartDoorbellSystem:
         print(f"Registered {name} successfully!")
     
     def detect_and_recognize(self, image):
-        """
-        Detect faces in image and recognize them
-        
-        Returns:
-            list: List of tuples [(x, y, w, h, name, confidence), ...]
-        """
+        # Detect faces in the image and recognize them
         # Convert to grayscale for face detection
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         
@@ -179,17 +160,7 @@ class SmartDoorbellSystem:
         return results
     
     def doorbell_pressed(self, camera_index=0, save_image=True):
-        """
-        Main function called when doorbell is pressed
-        Captures a single photo and identifies person
-        
-        Args:
-            camera_index: Camera device index (default 0, try 1 or 2 if not working)
-            save_image: Whether to save the captured image
-        
-        Returns:
-            str: "Known" or "Unknown"
-        """
+        # Handle doorbell press event
         print(f"\n{'='*50}")
         print(f"Doorbell pressed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"{'='*50}\n")
@@ -283,10 +254,7 @@ class SmartDoorbellSystem:
 
 
 def create_mobilenet_model(input_size=128, embedding_size=128):
-    """
-    Create a lightweight MobileNetV2-based face recognition model
-    Optimized for Raspberry Pi 4
-    """
+    # Create a MobileNetV2-based model for face embeddings
     if USING_TFLITE_RUNTIME:
         print("ERROR: Cannot create model with tflite-runtime.")
         print("Please run this on a machine with full TensorFlow installed.")
@@ -314,7 +282,7 @@ def create_mobilenet_model(input_size=128, embedding_size=128):
 
 
 def convert_to_tflite(keras_model, output_path='face_recognition_model.tflite'):
-    """Convert Keras model to TensorFlow Lite format"""
+    # Convert Keras model to TensorFlow Lite format
     if USING_TFLITE_RUNTIME:
         print("ERROR: Cannot convert model with tflite-runtime.")
         print("Please run this on a machine with full TensorFlow installed.")
@@ -335,17 +303,7 @@ def convert_to_tflite(keras_model, output_path='face_recognition_model.tflite'):
 
 
 def train_and_register_faces(system, data_dir='face_data'):
-    """
-    Register known faces from a directory structure:
-    face_data/
-        person1/
-            image1.jpg
-            image2.jpg
-        person2/
-            image1.jpg
-        person3/
-            image1.jpg
-    """
+    # Train and register faces from the given data directory
     data_path = Path(data_dir)
     
     if not data_path.exists():

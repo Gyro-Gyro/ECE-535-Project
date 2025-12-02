@@ -1,24 +1,13 @@
-"""
-quick_doorbell.py - Ultra-fast image capture + recognition
-Captures image IMMEDIATELY using doorbell_system method
-Optimized for instant response when doorbell is pressed
-"""
-
 import time
 from datetime import datetime
 
-print("="*60)
-print("Quick Doorbell - Instant Capture")
-print("="*60)
-
-# STEP 1: INSTANT CAPTURE (happens immediately)
+# capturing image first 
 print("\nCapturing image NOW...")
 start_time = time.time()
 
-# Import only what we need for capture
 import cv2
 
-# Open camera - auto-detect if camera 0 fails
+# Open camera failsafe
 cap = cv2.VideoCapture(2)
 
 if not cap.isOpened():
@@ -37,31 +26,27 @@ if not cap.isOpened():
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
-# Camera warm-up
+# Camera warm-up, frame discard and capture
+
 time.sleep(1.0)
 
-# Discard first frames
 for _ in range(15):
     cap.read()
 
-# CAPTURE THE FRAME
 ret, frame = cap.read()
 cap.release()
-
-capture_time = time.time() - start_time
-print(f"✓ Image captured in {capture_time:.2f} seconds")
 
 if not ret or frame is None:
     print("ERROR: Failed to capture image!")
     exit(1)
 
-# Save the raw capture
+# saving raw image
 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 capture_filename = f"capture_{timestamp}.jpg"
 cv2.imwrite(capture_filename, frame)
-print(f"✓ Saved raw capture as: {capture_filename}")
+print(f"Saved raw capture as: {capture_filename}")
 
-# STEP 2: NOW DO THE INFERENCE (slower part)
+# inference
 print("\nLoading recognition system...")
 inference_start = time.time()
 
@@ -73,14 +58,10 @@ doorbell = SmartDoorbellSystem()
 
 # Check if faces registered
 if len(doorbell.known_faces['names']) == 0:
-    print("⚠ WARNING: No faces registered!")
-    print("Run register_faces.py first!")
+    print("No faces registered, run register_faces.py first")
     exit(1)
 
-print(f"Registered faces: {', '.join(doorbell.known_faces['names'])}")
-print("Running face recognition on captured image...")
-
-# Detect and recognize on the ALREADY CAPTURED frame
+# Detect and recognize on captured frame
 results = doorbell.detect_and_recognize(frame)
 
 best_result = None
@@ -102,8 +83,6 @@ for (x, y, w, h, name, confidence) in results:
 annotated_filename = f"doorbell_{timestamp}.jpg"
 cv2.imwrite(annotated_filename, frame)
 
-inference_time = time.time() - inference_start
-total_time = time.time() - start_time
 
 # Results
 if best_result and best_confidence >= doorbell.threshold:
@@ -113,16 +92,8 @@ else:
     result = "UNKNOWN PERSON"
     final_result = "Unknown"
 
-print("\n" + "="*60)
 print(f"Result: {result}")
 print(f"Confidence: {best_confidence:.2f}")
-print(f"")
-print(f"Timing Breakdown:")
-print(f"  Capture time: {capture_time:.2f}s")
-print(f"  Inference time: {inference_time:.2f}s")
-print(f"  Total time: {total_time:.2f}s")
-print(f"")
 print(f"Images saved:")
-print(f"  Raw: {capture_filename}")
-print(f"  Annotated: {annotated_filename}")
-print("="*60)
+print(f"Raw: {capture_filename}")
+print(f"Annotated: {annotated_filename}")
