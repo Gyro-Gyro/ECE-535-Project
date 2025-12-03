@@ -1,10 +1,9 @@
 import time
-import RPi.GPIO as GPIO 
+from gpiozero import Button
 from datetime import datetime
 
 BUTTON_PIN = 16
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+button = Button(BUTTON_PIN)
 
 # capturing image first 
 print("\nCapturing image NOW...")
@@ -39,13 +38,11 @@ for _ in range(15):
     cap.read()
 
 
-while True:
-    if GPIO.input(BUTTON_PIN) == GPIO.LOW:
-        print("Button Pressed")
-        break
+print("Waiting for button press...")
+button.wait_for_press()
+print("Button Pressed")
         
 cap.release()
-GPIO.cleanup()
 ret, frame = cap.read()
 
 if ret == True:
