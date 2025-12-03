@@ -48,7 +48,9 @@ while True:
 GPIO.cleanup()
 ret, frame = cap.read()
 
-if not ret:
+if ret == True:
+    print("Captured Image") 
+else:
     print("ERROR: Failed to capture image!")
     exit(1)
 
