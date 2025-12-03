@@ -13,7 +13,7 @@ start_time = time.time()
 import cv2
 
 # Open camera failsafe
-cap = cv2.VideoCapture(2)
+cap = cv2.VideoCapture(0)
 
 if not cap.isOpened():
     print("Camera 0 failed, trying alternates...")
@@ -38,13 +38,13 @@ time.sleep(1.0)
 for _ in range(15):
     cap.read()
 
-cap.release()
 
 while True:
     if GPIO.input(BUTTON_PIN) == GPIO.LOW:
         print("Button Pressed")
         break
-
+        
+cap.release()
 GPIO.cleanup()
 ret, frame = cap.read()
 
