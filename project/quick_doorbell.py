@@ -28,8 +28,8 @@ if not cap.isOpened():
     exit(1)
 
 # Set resolution
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
 # Camera warm-up, frame discard and capture
 
