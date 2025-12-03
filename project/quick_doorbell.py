@@ -43,9 +43,8 @@ while True:
         print("Button Pressed")
         break
 
-
-cap.release()
 ret, frame = cap.read()
+cap.release()
 GPIO.cleanup()
 
 if ret == True:
