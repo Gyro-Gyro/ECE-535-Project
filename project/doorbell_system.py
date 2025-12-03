@@ -184,8 +184,8 @@ class SmartDoorbellSystem:
             return "Unknown"
         
         # Set resolution
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
         
         # Wait for camera to warm up and stabilize
         print("Warming up camera...")
