@@ -1,0 +1,36 @@
+Clone the repo
+
+Install tensorflow, opencv and numpy
+
+setup a virtual environment using
+
+python -m venv venv.
+
+Then initialize using the code
+source venv/bin/activate
+
+Windows: pip install tensorflow opencv-python numpy
+
+Once all files are downloaded place 5 to 6 pictures of a person's face you want to recognize on the face_data folders
+
+Save all changes and run the following scripts in sequnece:
+
+python setup_model.py
+python register_faces.py
+
+This sets up the embeddings required and names it known_faces.pkl
+
+To run the recognition model, 
+
+run this sequence of code
+sudo chown root:gpio /dev/gpiomem
+sudo chmod g+rw /dev/gpiomem
+
+after running those two codes, log out of the Raspberry PI and log back in
+
+afterwards run this code below to run the recognition model
+python quick_doorbell.py
+
+after this code is run, press the button connected to the Raspberry PI to take the image and you will receive the recognition output.
+
+
