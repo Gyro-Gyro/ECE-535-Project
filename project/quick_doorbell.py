@@ -41,11 +41,13 @@ for _ in range(15):
 while True:
     if GPIO.input(BUTTON_PIN) == GPIO.LOW:
         print("Button Pressed")
+        main_start_time = time.time()
         break
 
 ret, frame = cap.read()
 cap.release()
 GPIO.cleanup()
+capture_end_time = time.time()
 
 if ret == True:
     print("Captured Image") 
@@ -105,8 +107,22 @@ else:
     result = "UNKNOWN PERSON"
     final_result = "Unknown"
 
+inference_end_time = time.time()  # ADD THIS LINE
+
+# Calculate timings
+capture_time = capture_end_time - main_start_time
+inference_time = inference_end_time - inference_start
+total_time = inference_end_time - main_start_time
+
+
 print(f"Result: {result}")
 print(f"Confidence: {best_confidence:.2f}")
+print(f"")
+print(f"Timing Breakdown:")
+print(f"  Image Capture: {capture_time:.2f}s")
+print(f"  Face Recognition: {inference_time:.2f}s")
+print(f"  Total Time: {total_time:.2f}s")
+print(f"")
 print(f"Images saved:")
-print(f"Raw: {capture_filename}")
-print(f"Annotated: {annotated_filename}")
+print(f"  Raw: {capture_filename}")
+print(f"  Annotated: {annotated_filename}")
