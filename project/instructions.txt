@@ -1,5 +1,6 @@
-1. Clone the repo
-2. Install tensorflow, opencv and numpy
+Clone the repo
+
+Install tensorflow, opencv and numpy
 
 setup a virtual environment using
 
