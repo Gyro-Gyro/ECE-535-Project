@@ -107,7 +107,7 @@ else:
     result = "UNKNOWN PERSON"
     final_result = "Unknown"
 
-inference_end_time = time.time()  # ADD THIS LINE
+inference_end_time = time.time()
 
 # Calculate timings
 capture_time = capture_end_time - main_start_time
